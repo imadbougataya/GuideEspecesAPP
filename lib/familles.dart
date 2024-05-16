@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:video_player/video_player.dart';
 
-import 'dbhelper.dart'; // Ensure this is correctly pointing to your DatabaseHelper class
+import 'dbhelper.dart';
 import 'especes.dart';
 
 class FamillesPage extends StatefulWidget {
@@ -17,7 +17,7 @@ class FamillesPage extends StatefulWidget {
 class _FamillesPageState extends State<FamillesPage> {
   late VideoPlayerController _controller;
   final logger = Logger(printer: PrettyPrinter());
-  String message = 'Recherche de resultats, merci de patienter...';
+  String message = 'Recherche de résultats, merci de patienter...';
   List<Map<String, dynamic>> tableData = [];
   List<String> tables = [
     'Lamproies',
@@ -46,16 +46,15 @@ class _FamillesPageState extends State<FamillesPage> {
   }
 
   Future<void> _attemptFetchData() async {
-    String tableName =
-        tables[widget.index].toLowerCase(); // Ensure table name is lowercase
+    String tableName = tables[widget.index].toLowerCase();
     try {
       tableData = await DatabaseHelper.instance.getFamillesTableData(tableName);
       setState(() {
-        message = tableData.isNotEmpty ? '' : 'Aucun resultat pour $tableName.';
+        message = tableData.isNotEmpty ? '' : 'Aucun résultat pour $tableName.';
       });
     } catch (e) {
       setState(() => message =
-          'Impossible de recuperer les informations. Verifiez votre connection.');
+          'Impossible de récupérer les informations. Vérifiez votre connexion.');
       logger.e('Failed to fetch data: $e');
     }
   }
@@ -71,129 +70,88 @@ class _FamillesPageState extends State<FamillesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text('Familles de l\'ordre ${tables[widget.index]}'),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
+        title: Text('Familles de Poissons'),
       ),
       body: Stack(
         children: [
-          // Video Background
-          _buildVideoBackground(),
-          // Content Overlay
-          _buildScrollableContentWithLogo(),
+          _controller.value.isInitialized
+              ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
+                    ),
+                  ),
+                )
+              : Container(),
+          Column(
+            children: [
+              _buildLogo(),
+              Expanded(child: _buildContent()),
+            ],
+          ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => logger.d('FloatingActionButton pressed'),
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildVideoBackground() {
-    // Ensure the video covers the entire screen
-    return Positioned.fill(
-      child: AspectRatio(
-        aspectRatio: _controller.value.aspectRatio,
-        child: VideoPlayer(_controller),
-      ),
-    );
-  }
-
-  Widget _buildScrollableContentWithLogo() {
-    // Use a ListView to allow for scrolling
-    return ListView(
-      children: <Widget>[
-        // Logo and potentially other content before the list
-        _buildLogo(),
-        // Message or Data Cards
-        if (message.isNotEmpty) _buildMessageOverlay(),
-        ...tableData.map((data) => _buildDataCard(data)).toList(),
-      ],
     );
   }
 
   Widget _buildContent() {
-    return CustomScrollView(
-      slivers: <Widget>[
-        SliverToBoxAdapter(
-          child: _buildLogo(),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.all(8.0),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                if (message.isNotEmpty && index == 0) {
-                  // Only show the message in the first position if it's set
-                  return _buildMessageOverlay();
-                }
-                // Adjust index if message is not empty to account for the offset
-                int dataIndex = message.isNotEmpty ? index - 1 : index;
-                return _buildDataCard(tableData[dataIndex]);
-              },
-              childCount:
-                  message.isNotEmpty ? tableData.length + 1 : tableData.length,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDataCard(Map<String, dynamic> data) {
-    return InkWell(
-      onTap: () {
-        // When the card is tapped, navigate to the EspecesPage
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) =>
-                EspecesPage(famille: data['famille'], groupe: data['groupe']),
-          ),
-        );
-      },
-      child: Card(
-        elevation: 4,
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                data['famille'] ?? 'Famille inconnue',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Ordre: ${data['ordre'] ?? 'N/A'}',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Espece: ${data['espece'] ?? 'N/A'}', // Changed 'Famille' to 'Espece' for clarity
-                style: TextStyle(fontSize: 16),
-              ),
-              // Add more fields as needed
-            ],
-          ),
-        ),
-      ),
-    );
+    return tableData.isEmpty
+        ? _buildMessageOverlay()
+        : ListView.builder(
+            itemCount: tableData.length,
+            itemBuilder: (context, index) {
+              final data = tableData[index];
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EspecesPage(
+                        famille: data['famille'],
+                        groupe: tables[widget.index],
+                      ),
+                    ),
+                  );
+                },
+                child: Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          data['famille'] ?? 'Famille inconnue',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Ordre: ${data['ordre'] ?? 'N/A'}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Espèce: ${data['espece'] ?? 'N/A'}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
   }
 
   Widget _buildMessageOverlay() {
-    // Message overlay widget, similar to your current implementation
     return Center(
       child: Container(
         padding: EdgeInsets.all(10),
-        color: Colors
-            .black45, // Semi-transparent black background for better readability
+        color: Colors.black45,
         child: Text(
           message,
           style: TextStyle(fontSize: 20, color: Colors.white),
@@ -204,14 +162,13 @@ class _FamillesPageState extends State<FamillesPage> {
   }
 
   Widget _buildLogo() {
-    // This widget displays the logo; adjust size and margins as needed
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Center(
         child: Image.asset(
           'assets/logo.png',
           width: MediaQuery.of(context).size.width * 0.65,
-          height: 120, // Specify your logo height
+          height: 120,
           fit: BoxFit.contain,
         ),
       ),

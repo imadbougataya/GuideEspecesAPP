@@ -2,14 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class FichePage extends StatefulWidget {
-  //final Map<String, dynamic> species;
-  final String famille;
-  final String groupe;
-  final String espece;
-  final String nomFAOFr;
+  final String nom;
+  final String description;
+  final String image;
+  final String habitat;
+  final String alimentation;
+  final String taille;
+  final String conservationStatus;
+  final String funFact;
 
-
-  const FichePage({Key? key, required this.espece,required this.groupe,required this.famille,required this.nomFAOFr}) : super(key: key);
+  FichePage({
+    required this.nom,
+    required this.description,
+    required this.image,
+    required this.habitat,
+    required this.alimentation,
+    required this.taille,
+    required this.conservationStatus,
+    required this.funFact,
+  });
 
   @override
   _FichePageState createState() => _FichePageState();
@@ -21,11 +32,7 @@ class _FichePageState extends State<FichePage> {
   @override
   void initState() {
     super.initState();
-    _initializeVideo();
-  }
-
-  void _initializeVideo() {
-    _controller = VideoPlayerController.asset('assets/sea_background.mp4')
+    _controller = VideoPlayerController.asset('assets/sea_portrait.mp4')
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
@@ -43,69 +50,97 @@ class _FichePageState extends State<FichePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text('Espèces pour ${widget.espece}'),
-        backgroundColor: Theme.of(context).colorScheme.secondary,
+        title: Text(widget.nom),
       ),
       body: Stack(
         children: [
-          _buildVideoBackground(),
-          _buildLogo(),
-          _buildContent(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVideoBackground() {
-    return Positioned.fill(
-      child: VideoPlayer(_controller),
-    );
-  }
-
-  Widget _buildLogo() {
-    return Positioned(
-      top: 20,
-      left: 0,
-      right: 0,
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: Image.asset(
-          'assets/logo.png',
-          width: MediaQuery.of(context).size.width * 0.65,
-          fit: BoxFit.contain,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    return Positioned.fill(
-      top: MediaQuery.of(context).size.height * 0.15, // Adjust this to avoid overlap with the logo
-      child: SingleChildScrollView(
-        child: Container(
-          width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(widget.species['espece'] ?? 'Unknown Species',
-                  style: Theme.of(context).textTheme.headline4),
-              SizedBox(height: 10),
-              Text('Details:',
-                  style: Theme.of(context).textTheme.headline6),
-              Text(widget.species['description'] ?? 'No details available'),
-              SizedBox(height: 20),
-              // Add more fields as necessary
-              Text('More Info:',
-                  style: Theme.of(context).textTheme.headline6),
-              Text(widget.species['additionalInfo'] ?? 'No additional information'),
-            ],
+          _controller.value.isInitialized
+              ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _controller.value.size.width,
+                      height: _controller.value.size.height,
+                      child: VideoPlayer(_controller),
+                    ),
+                  ),
+                )
+              : Container(),
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  widget.nom,
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 10),
+                Image.network(widget.image),
+                SizedBox(height: 10),
+                Text(
+                  widget.description,
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Habitat',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  widget.habitat,
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Alimentation',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  widget.alimentation,
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Taille',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  widget.taille,
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Statut de conservation',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  widget.conservationStatus,
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 20),
+                Text(
+                  'Fait amusant',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  widget.funFact,
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
           ),
-        ),
+          Positioned(
+            top: 20,
+            left: 20,
+            child: Image.asset(
+              'assets/logo.png',
+              width: MediaQuery.of(context).size.width * 0.65,
+              height: 120,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ],
       ),
     );
   }
