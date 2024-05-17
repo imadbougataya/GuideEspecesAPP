@@ -41,6 +41,8 @@ class _FamillesPageState extends State<FamillesPage> {
         setState(() {});
         _controller.play();
         _controller.setLooping(true);
+      }).catchError((error) {
+        logger.e('Error initializing video: $error');
       });
     logger.d('VideoPlayer initialized and playing');
   }
@@ -106,15 +108,19 @@ class _FamillesPageState extends State<FamillesPage> {
               final data = tableData[index];
               return InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EspecesPage(
-                        famille: data['famille'],
-                        groupe: tables[widget.index],
+                  try {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EspecesPage(
+                          famille: data['famille'],
+                          groupe: tables[widget.index],
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  } catch (e) {
+                    logger.e('Error navigating to EspecesPage: $e');
+                  }
                 },
                 child: Card(
                   elevation: 4,

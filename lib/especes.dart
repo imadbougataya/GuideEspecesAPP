@@ -1,3 +1,6 @@
+import 'dart:convert'; // Import base64 decoding
+import 'dart:typed_data'; // Import Uint8List
+
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:video_player/video_player.dart';
@@ -60,6 +63,18 @@ class _EspecesPageState extends State<EspecesPage> {
     super.dispose();
   }
 
+  Uint8List? _decodeImage(String? base64String) {
+    if (base64String == null || base64String.isEmpty) {
+      return null;
+    }
+    try {
+      return base64Decode(base64String);
+    } catch (e) {
+      logger.e('Error decoding image: $e');
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,6 +134,7 @@ class _EspecesPageState extends State<EspecesPage> {
                         nom: espece['espece'] ?? 'Espèce inconnue',
                         description: espece['diagnose'] ?? 'Aucune description',
                         image: espece['pictureUrl'] ?? '',
+                        speciesReferencePhoto: _decodeImage(espece['speciesReferencePhoto']),
                         habitat: espece['habitats'] ?? 'N/A',
                         alimentation: espece['biology'] ?? 'N/A',
                         taille: espece['tailleMax'] ?? 'N/A',

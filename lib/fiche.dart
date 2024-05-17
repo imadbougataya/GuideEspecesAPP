@@ -1,3 +1,5 @@
+import 'dart:typed_data'; // Add this import
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -5,6 +7,7 @@ class FichePage extends StatefulWidget {
   final String nom;
   final String description;
   final String image;
+  final Uint8List? speciesReferencePhoto;
   final String habitat;
   final String alimentation;
   final String taille;
@@ -16,6 +19,7 @@ class FichePage extends StatefulWidget {
     required this.nom,
     required this.description,
     required this.image,
+    required this.speciesReferencePhoto,
     required this.habitat,
     required this.alimentation,
     required this.taille,
@@ -39,19 +43,12 @@ class _FichePageState extends State<FichePage> {
 
   Future<void> _initializeVideo() async {
     _controller = VideoPlayerController.asset('assets/sea_portrait.mp4');
-    try {
-      await _controller.initialize();
-      setState(() {
-        _isVideoInitialized = true;
-        _controller.play();
-        _controller.setLooping(true);
-      });
-    } catch (e) {
-      setState(() {
-        _isVideoInitialized = false;
-      });
-      print('Error initializing video: $e');
-    }
+    await _controller.initialize();
+    setState(() {
+      _isVideoInitialized = true;
+      _controller.play();
+      _controller.setLooping(true);
+    });
   }
 
   @override
@@ -79,25 +76,18 @@ class _FichePageState extends State<FichePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   _buildLogo(),
-                  SizedBox(height: 10), // Adjusted spacing between logo and image
                   Center(
-                    child: AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Image.asset(
-                        widget.image.isNotEmpty
-                            ? widget.image
-                            : 'assets/Image_non_disponible.png',
-                        width: double.infinity,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Image.asset(
-                            'assets/Image_non_disponible.png',
-                            width: double.infinity,
+                    child: widget.speciesReferencePhoto != null
+                        ? Image.memory(
+                            widget.speciesReferencePhoto!,
+                            width: MediaQuery.of(context).size.width * 0.9,
                             fit: BoxFit.contain,
-                          );
-                        },
-                      ),
-                    ),
+                          )
+                        : Image.asset(
+                            'assets/Image_non_disponible.png',
+                            width: MediaQuery.of(context).size.width * 0.9,
+                            fit: BoxFit.contain,
+                          ),
                   ),
                   SizedBox(height: 16.0),
                   _buildInfoGrid(),
@@ -112,7 +102,7 @@ class _FichePageState extends State<FichePage> {
 
   Widget _buildLogo() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0), // Reduced vertical padding
+      padding: const EdgeInsets.symmetric(vertical: 20.0),
       child: Center(
         child: Image.asset(
           'assets/logo.png',
@@ -142,7 +132,7 @@ class _FichePageState extends State<FichePage> {
         maxCrossAxisExtent: 300,
         mainAxisSpacing: 8.0,
         crossAxisSpacing: 8.0,
-        childAspectRatio: 1.0, // Adjusted child aspect ratio
+        childAspectRatio: 0.75,
       ),
       itemCount: info.length,
       itemBuilder: (context, index) {
