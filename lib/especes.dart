@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:video_player/video_player.dart';
 
 import 'dbhelper.dart';
-import 'fiche.dart'; // Assurez-vous que ce fichier est importé correctement
+import 'fiche.dart';
 
 class EspecesPage extends StatefulWidget {
   final String famille;
@@ -17,11 +18,15 @@ class EspecesPage extends StatefulWidget {
 class _EspecesPageState extends State<EspecesPage> {
   final dbHelper = DatabaseHelper.instance;
   late VideoPlayerController _controller;
+  final Logger logger = Logger();
+  List<Map<String, dynamic>> tableData = []; // Définition de tableData
 
   @override
   void initState() {
     super.initState();
+    logger.i('EspecesPage initialized for groupe: ${widget.groupe}, famille: ${widget.famille}');
     _initializeVideo();
+    _fetchData();
   }
 
   void _initializeVideo() {
@@ -30,12 +35,28 @@ class _EspecesPageState extends State<EspecesPage> {
         setState(() {});
         _controller.play();
         _controller.setLooping(true);
+        logger.i('Video initialized and playing.');
+      }).catchError((error) {
+        logger.e('Error initializing video: $error');
       });
+  }
+
+  void _fetchData() async {
+    try {
+      final data = await dbHelper.getEspecesTableData(widget.groupe, widget.famille);
+      setState(() {
+        tableData = data;
+      });
+      logger.i('Data fetched successfully.');
+    } catch (error) {
+      logger.e('Error fetching data: $error');
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    logger.i('EspecesPage disposed.');
     super.dispose();
   }
 
@@ -77,8 +98,10 @@ class _EspecesPageState extends State<EspecesPage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
+          logger.e('Error in FutureBuilder: ${snapshot.error}');
           return Center(child: Text('Erreur : ${snapshot.error}'));
         } else if (!snapshot.hasData || (snapshot.data as List).isEmpty) {
+          logger.w('No data found.');
           return Center(child: Text('Aucune espèce trouvée.'));
         } else {
           final especes = snapshot.data as List<Map<String, dynamic>>;
@@ -88,6 +111,7 @@ class _EspecesPageState extends State<EspecesPage> {
               final espece = especes[index];
               return InkWell(
                 onTap: () {
+                  logger.i('Navigating to FichePage for espece: ${espece['espece']}');
                   Navigator.push(
                     context,
                     MaterialPageRoute(
